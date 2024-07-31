@@ -5,6 +5,7 @@ import datetime
 
 # Configurações a partir de variáveis de ambiente
 DB_HOST = os.getenv('DB_HOST')
+DB_PORT = os.getenv('DB_PORT')
 DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
 DB_NAME = os.getenv('DB_NAME')
@@ -19,7 +20,7 @@ SPACE_ENDPOINT = f'https://{SPACE_REGION}.digitaloceanspaces.com'
 
 def backup_database():
     backup_file = f"backup_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.sql"
-    command = f"mysqldump -h {DB_HOST} -u {DB_USER} -p{DB_PASSWORD} {DB_NAME} > {backup_file}"
+    command = f"mysqldump -h {DB_HOST} -P {DB_PORT} -u {DB_USER} -p{DB_PASSWORD} {DB_NAME} > {backup_file}"
     os.system(command)
     return backup_file
 
