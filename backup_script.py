@@ -1,5 +1,4 @@
 import os
-import mysql.connector
 import boto3
 import datetime
 import gzip
