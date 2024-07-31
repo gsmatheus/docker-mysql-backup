@@ -1,28 +1,28 @@
-# Usando uma imagem base do Python
+# Using a base Python image
 FROM python:3.9-slim
 
-# Definindo o diretório de trabalho
+# Setting the working directory
 WORKDIR /app
 
-# Instalando o MySQL client, cron e outras dependências do sistema
+# Installing MySQL client, cron, and other system dependencies
 RUN apt-get update && apt-get install -y \
   default-mysql-client \
   cron \
   && rm -rf /var/lib/apt/lists/*
 
-# Copiando o requirements.txt e instalando as dependências Python
+# Copying requirements.txt and installing Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiando o script Python e o arquivo de configuração do cron para o contêiner
+# Copying the Python script and cron configuration file to the container
 COPY backup_script.py .
 COPY crontab /etc/cron.d/backup-cron
 
-# Dando permissões corretas ao arquivo de configuração do cron
+# Setting correct permissions for the cron file
 RUN chmod 0644 /etc/cron.d/backup-cron
 
-# Aplicando o arquivo de configuração do cron
+# Applying the cron configuration
 RUN crontab /etc/cron.d/backup-cron
 
-# Adicionando o cron para rodar em foreground e garantir que o contêiner continue rodando
+# Starting cron in the foreground
 CMD ["cron", "-f"]
