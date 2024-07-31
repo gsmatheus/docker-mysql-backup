@@ -2,13 +2,16 @@ import os
 import mysql.connector
 import boto3
 import datetime
+import gzip
+import shutil
 
 # Configurações a partir de variáveis de ambiente
 DB_HOST = os.getenv('DB_HOST')
 DB_PORT = os.getenv('DB_PORT')
 DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
-DB_NAME = os.getenv('DB_NAME')
+# Supondo uma lista separada por vírgulas
+DB_NAMES = os.getenv('DB_NAMES').split(',')
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 SPACE_NAME = os.getenv('SPACE_NAME')
@@ -18,11 +21,22 @@ SPACE_ENDPOINT = f'https://{SPACE_REGION}.digitaloceanspaces.com'
 # Função para fazer backup do banco de dados
 
 
-def backup_database():
-    backup_file = f"backup_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.sql"
-    command = f"mysqldump -h {DB_HOST} -P {DB_PORT} -u {DB_USER} -p{DB_PASSWORD} {DB_NAME} > {backup_file}"
+def backup_database(db_name):
+    backup_file = f"backup_{db_name}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.sql"
+    command = f"mysqldump -h {DB_HOST} -P {DB_PORT} -u {DB_USER} -p{DB_PASSWORD} {db_name} > {backup_file}"
     os.system(command)
     return backup_file
+
+# Função para compactar o arquivo
+
+
+def compress_file(file_path):
+    compressed_file = f"{file_path}.gz"
+    with open(file_path, 'rb') as f_in:
+        with gzip.open(compressed_file, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+    os.remove(file_path)  # Remove o arquivo .sql original
+    return compressed_file
 
 # Função para enviar o backup para o DigitalOcean Spaces
 
@@ -35,12 +49,14 @@ def upload_to_digitalocean(file_path):
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
     )
     with open(file_path, 'rb') as file:
-        s3_client.upload_fileobj(file, SPACE_NAME, file_path)
+        s3_client.upload_fileobj(file, SPACE_NAME, os.path.basename(file_path))
     print(f'{file_path} enviado para o DigitalOcean Spaces.')
 
 
 if __name__ == "__main__":
-    backup_file = backup_database()
-    upload_to_digitalocean(backup_file)
-    # Opcional: excluir o arquivo após o envio
-    os.remove(backup_file)
+    for db_name in DB_NAMES:
+        backup_file = backup_database(db_name)
+        compressed_file = compress_file(backup_file)
+        upload_to_digitalocean(compressed_file)
+        # Opcional: excluir o arquivo compactado após o envio
+        os.remove(compressed_file)
