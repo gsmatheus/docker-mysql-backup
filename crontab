@@ -1,1 +1,1 @@
-0 * * * * /usr/local/bin/python /app/backup_script.py
+0 * * * * /usr/local/bin/python /app/backup_script.py >> /var/log/cron.log 2>&1
