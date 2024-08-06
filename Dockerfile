@@ -20,6 +20,7 @@ COPY crontab /etc/cron.d/backup-cron
 
 # Setting correct permissions for the cron file
 RUN chmod 0644 /etc/cron.d/backup-cron
+RUN chmod +x /app/backup_script.py
 
 # Applying the cron configuration
 RUN crontab /etc/cron.d/backup-cron
