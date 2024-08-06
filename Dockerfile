@@ -24,6 +24,7 @@ RUN chmod +x /app/backup_script.py
 
 # Applying the cron configuration
 RUN crontab /etc/cron.d/backup-cron
+RUN touch /var/log/cron.log
 
 # Starting cron in the foreground
 CMD ["cron", "-f"]
